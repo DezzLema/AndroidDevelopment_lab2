@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,7 +53,7 @@ fun ListScreen() {
         }
     ) { innerPadding ->
         if (isLandscape) {
-            // Ландшафтный режим - горизонтальная компоновка
+            // Ландшафтный режим
             LandscapeLayout(
                 items = items,
                 selectedIndices = selectedIndices,
@@ -77,7 +79,7 @@ fun ListScreen() {
                 innerPadding = innerPadding
             )
         } else {
-            // Портретный режим - вертикальная компоновка
+            // Портретный режим
             PortraitLayout(
                 items = items,
                 selectedIndices = selectedIndices,
@@ -127,16 +129,7 @@ fun PortraitLayout(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Поле для ввода имени с кнопкой добавления
-        NameInputFieldWithButton(
-            name = name,
-            onNameChange = onNameChange,
-            onAddItem = onAddItem,
-            currentLanguage = currentLanguage,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Квадрат с элементами массива
+        // Список элементов
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -158,6 +151,15 @@ fun PortraitLayout(
                 )
             }
         }
+
+        // Поле для ввода имени с кнопкой добавления (знак "+")
+        NameInputFieldWithAddButton(
+            name = name,
+            onNameChange = onNameChange,
+            onAddItem = onAddItem,
+            currentLanguage = currentLanguage,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         // Вертикальные кнопки (только если есть элементы)
         if (items.isNotEmpty()) {
@@ -200,15 +202,6 @@ fun LandscapeLayout(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Поле для ввода имени с кнопкой добавления
-        NameInputFieldWithButton(
-            name = name,
-            onNameChange = onNameChange,
-            onAddItem = onAddItem,
-            currentLanguage = currentLanguage,
-            modifier = Modifier.fillMaxWidth()
-        )
-
         // Горизонтальная компоновка: список слева, кнопки справа
         Row(
             modifier = Modifier
@@ -268,11 +261,20 @@ fun LandscapeLayout(
                 Spacer(modifier = Modifier.weight(0.3f))
             }
         }
+
+        // Поле для ввода имени с кнопкой добавления (внизу)
+        NameInputFieldWithTextButton(
+            name = name,
+            onNameChange = onNameChange,
+            onAddItem = onAddItem,
+            currentLanguage = currentLanguage,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
 @Composable
-fun NameInputFieldWithButton(
+fun NameInputFieldWithAddButton(
     name: String,
     onNameChange: (String) -> Unit,
     onAddItem: () -> Unit,
@@ -281,7 +283,64 @@ fun NameInputFieldWithButton(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = if (currentLanguage == "ru") "Имя элемента" else "Item name",
+            text = if (currentLanguage == "ru") "Имя" else "Name",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                modifier = Modifier.weight(1f),
+                placeholder = {
+                    Text(if (currentLanguage == "ru") "Введите имя элемента" else "Enter item name")
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                )
+            )
+
+            // Кнопка с иконкой "+"
+            IconButton(
+                onClick = onAddItem,
+                enabled = name.isNotBlank(),
+                modifier = Modifier
+                    .size(56.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = if (currentLanguage == "ru") "Добавить" else "Add",
+                    modifier = Modifier.size(32.dp),
+                    tint = if (name.isNotBlank()) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NameInputFieldWithTextButton(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onAddItem: () -> Unit,
+    currentLanguage: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = if (currentLanguage == "ru") "Имя" else "Name",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -350,9 +409,9 @@ fun EmptyListMessage(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = if (currentLanguage == "ru")
-                    "Добавьте элементы с помощью поля выше"
+                    "Добавьте элементы с помощью поля ниже"
                 else
-                    "Add items using the field above",
+                    "Add items using the field below",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
