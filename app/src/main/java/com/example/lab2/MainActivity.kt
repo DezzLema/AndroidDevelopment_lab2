@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ListScreen() {
-    var items by remember { mutableStateOf(List(20) { it }) }
+    var items by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedIndices by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var name by remember { mutableStateOf("") }
     val isLandscape = isLandscapeOrientation()
@@ -57,10 +57,16 @@ fun ListScreen() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Поле для ввода имени
-            NameInputField(
+            // Поле для ввода имени с кнопкой добавления
+            NameInputFieldWithButton(
                 name = name,
                 onNameChange = { name = it },
+                onAddItem = {
+                    if (name.isNotBlank()) {
+                        items = items + name
+                        name = "" // Очищаем поле после добавления
+                    }
+                },
                 currentLanguage = currentLanguage,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -71,80 +77,148 @@ fun ListScreen() {
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                ItemsGrid(
-                    items = items,
-                    selectedIndices = selectedIndices,
-                    onItemClick = { index ->
-                        selectedIndices = if (selectedIndices.contains(index)) {
-                            selectedIndices - index
-                        } else {
-                            selectedIndices + index
-                        }
-                    },
-                    currentLanguage = currentLanguage,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (items.isEmpty()) {
+                    // Сообщение о пустом списке
+                    EmptyListMessage(
+                        currentLanguage = currentLanguage,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    ItemsGrid(
+                        items = items,
+                        selectedIndices = selectedIndices,
+                        onItemClick = { index ->
+                            selectedIndices = if (selectedIndices.contains(index)) {
+                                selectedIndices - index
+                            } else {
+                                selectedIndices + index
+                            }
+                        },
+                        currentLanguage = currentLanguage,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
 
-            // Вертикальные кнопки
-            VerticalButtons(
-                onSelectAll = {
-                    selectedIndices = items.indices.toSet()
+            // Вертикальные кнопки (только если есть элементы)
+            if (items.isNotEmpty()) {
+                VerticalButtons(
+                    onSelectAll = {
+                        selectedIndices = items.indices.toSet()
+                    },
+                    onClearSelection = {
+                        selectedIndices = emptySet()
+                    },
+                    onSelectEven = {
+                        selectedIndices = items.indices.filter { it % 2 == 0 }.toSet()
+                    },
+                    currentLanguage = currentLanguage,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Информация о выборе
+                SelectedInfo(
+                    selectedCount = selectedIndices.size,
+                    currentLanguage = currentLanguage,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NameInputFieldWithButton(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onAddItem: () -> Unit,
+    currentLanguage: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = if (currentLanguage == "ru") "Имя элемента" else "Item name",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = onNameChange,
+                modifier = Modifier.weight(1f),
+                placeholder = {
+                    Text(if (currentLanguage == "ru") "Введите имя элемента" else "Enter item name")
                 },
-                onClearSelection = {
-                    selectedIndices = emptySet()
-                },
-                onSelectEven = {
-                    selectedIndices = items.indices.filter { it % 2 == 0 }.toSet()
-                },
-                currentLanguage = currentLanguage,
-                modifier = Modifier.fillMaxWidth()
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                )
             )
 
-            // Информация о выборе
-            SelectedInfo(
-                selectedCount = selectedIndices.size,
-                currentLanguage = currentLanguage,
-                modifier = Modifier.fillMaxWidth()
+            Button(
+                onClick = onAddItem,
+                enabled = name.isNotBlank(),
+                modifier = Modifier.height(56.dp)
+            ) {
+                Text(
+                    text = if (currentLanguage == "ru") "Добавить" else "Add",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyListMessage(
+    currentLanguage: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = if (currentLanguage == "ru") "📝" else "📝",
+                style = MaterialTheme.typography.displayMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = if (currentLanguage == "ru") "Список пуст" else "List is empty",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (currentLanguage == "ru")
+                    "Добавьте элементы с помощью поля выше"
+                else
+                    "Add items using the field above",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
 
 @Composable
-fun NameInputField(
-    name: String,
-    onNameChange: (String) -> Unit,
-    currentLanguage: String,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = if (currentLanguage == "ru") "Имя" else "Name",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = name,
-            onValueChange = onNameChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {
-                Text(if (currentLanguage == "ru") "Введите ваше имя" else "Enter your name")
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            )
-        )
-    }
-}
-
-@Composable
 fun ItemsGrid(
-    items: List<Int>,
+    items: List<String>,
     selectedIndices: Set<Int>,
     onItemClick: (Int) -> Unit,
     currentLanguage: String,
@@ -158,53 +232,34 @@ fun ItemsGrid(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         border = ButtonDefaults.outlinedButtonBorder
     ) {
-        if (isLandscapeOrientation()) {
-            // Ландшафт - сетка 4x5
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(items.chunked(4)) { rowItems ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        rowItems.forEachIndexed { rowIndex, item ->
-                            val index = items.indexOf(item)
-                            Box(modifier = Modifier.weight(1f)) {
-                                GridItem(
-                                    item = item,
-                                    index = index,
-                                    isSelected = selectedIndices.contains(index),
-                                    onClick = { onItemClick(index) },
-                                    currentLanguage = currentLanguage
-                                )
-                            }
+        val columns = if (isLandscapeOrientation()) 4 else 3
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(items.chunked(columns)) { rowItems ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    rowItems.forEachIndexed { rowIndex, item ->
+                        val index = items.indexOf(item)
+                        Box(modifier = Modifier.weight(1f)) {
+                            GridItem(
+                                item = item,
+                                index = index,
+                                isSelected = selectedIndices.contains(index),
+                                onClick = { onItemClick(index) },
+                                currentLanguage = currentLanguage
+                            )
                         }
                     }
-                }
-            }
-        } else {
-            // Портрет - сетка 3x7
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(items.chunked(3)) { rowItems ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        rowItems.forEachIndexed { rowIndex, item ->
-                            val index = items.indexOf(item)
+                    // Добавляем пустые ячейки для выравнивания последней строки
+                    if (rowItems.size < columns) {
+                        repeat(columns - rowItems.size) {
                             Box(modifier = Modifier.weight(1f)) {
-                                GridItem(
-                                    item = item,
-                                    index = index,
-                                    isSelected = selectedIndices.contains(index),
-                                    onClick = { onItemClick(index) },
-                                    currentLanguage = currentLanguage
-                                )
+                                Spacer(modifier = Modifier.aspectRatio(1f))
                             }
                         }
                     }
@@ -216,7 +271,7 @@ fun ItemsGrid(
 
 @Composable
 fun GridItem(
-    item: Int,
+    item: String,
     index: Int,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -249,13 +304,15 @@ fun GridItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "${item + 1}",
+                text = item.take(10), // Ограничиваем длину имени для отображения
                 style = MaterialTheme.typography.titleMedium,
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
                     MaterialTheme.colorScheme.onSurface
-                }
+                },
+                maxLines = 2,
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
             Text(
                 text = "[$index]",
@@ -370,7 +427,7 @@ fun CustomTopAppBar(currentLanguage: String) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Lab2 - Список элементов",
+                text = "Lab2 - Динамический список",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimary
             )
