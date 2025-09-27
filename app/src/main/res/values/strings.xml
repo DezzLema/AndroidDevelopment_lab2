@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Lab2</string>
+    <string name="hello_android">Hello Android!</string>
+    <string name="select_all">Select All</string>
+    <string name="clear_selection">Clear Selection</string>
+    <string name="select_even">Select Even</string>
+    <string name="item">Item</string>
+
+    <!-- Русские версии -->
+    <string name="app_name_ru">Lab2</string>
+    <string name="select_all_ru">Выбрать все</string>
+    <string name="clear_selection_ru">Сбросить выбор</string>
+    <string name="select_even_ru">Выбрать четные</string>
+    <string name="item_ru">Элемент</string>
+</resources>
