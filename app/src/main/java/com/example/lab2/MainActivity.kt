@@ -50,35 +50,179 @@ fun ListScreen() {
             CustomTopAppBar(currentLanguage = currentLanguage)
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Поле для ввода имени с кнопкой добавления
-            NameInputFieldWithButton(
+        if (isLandscape) {
+            // Ландшафтный режим - горизонтальная компоновка
+            LandscapeLayout(
+                items = items,
+                selectedIndices = selectedIndices,
+                onItemClick = { index ->
+                    selectedIndices = if (selectedIndices.contains(index)) {
+                        selectedIndices - index
+                    } else {
+                        selectedIndices + index
+                    }
+                },
                 name = name,
                 onNameChange = { name = it },
                 onAddItem = {
                     if (name.isNotBlank()) {
                         items = items + name
-                        name = "" // Очищаем поле после добавления
+                        name = ""
                     }
                 },
+                onSelectAll = { selectedIndices = items.indices.toSet() },
+                onClearSelection = { selectedIndices = emptySet() },
+                onSelectEven = { selectedIndices = items.indices.filter { it % 2 == 0 }.toSet() },
+                currentLanguage = currentLanguage,
+                innerPadding = innerPadding
+            )
+        } else {
+            // Портретный режим - вертикальная компоновка
+            PortraitLayout(
+                items = items,
+                selectedIndices = selectedIndices,
+                onItemClick = { index ->
+                    selectedIndices = if (selectedIndices.contains(index)) {
+                        selectedIndices - index
+                    } else {
+                        selectedIndices + index
+                    }
+                },
+                name = name,
+                onNameChange = { name = it },
+                onAddItem = {
+                    if (name.isNotBlank()) {
+                        items = items + name
+                        name = ""
+                    }
+                },
+                onSelectAll = { selectedIndices = items.indices.toSet() },
+                onClearSelection = { selectedIndices = emptySet() },
+                onSelectEven = { selectedIndices = items.indices.filter { it % 2 == 0 }.toSet() },
+                currentLanguage = currentLanguage,
+                innerPadding = innerPadding
+            )
+        }
+    }
+}
+
+@Composable
+fun PortraitLayout(
+    items: List<String>,
+    selectedIndices: Set<Int>,
+    onItemClick: (Int) -> Unit,
+    name: String,
+    onNameChange: (String) -> Unit,
+    onAddItem: () -> Unit,
+    onSelectAll: () -> Unit,
+    onClearSelection: () -> Unit,
+    onSelectEven: () -> Unit,
+    currentLanguage: String,
+    innerPadding: PaddingValues
+) {
+    Column(
+        modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Поле для ввода имени с кнопкой добавления
+        NameInputFieldWithButton(
+            name = name,
+            onNameChange = onNameChange,
+            onAddItem = onAddItem,
+            currentLanguage = currentLanguage,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Квадрат с элементами массива
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            if (items.isEmpty()) {
+                EmptyListMessage(
+                    currentLanguage = currentLanguage,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                ItemsGrid(
+                    items = items,
+                    selectedIndices = selectedIndices,
+                    onItemClick = onItemClick,
+                    currentLanguage = currentLanguage,
+                    modifier = Modifier.fillMaxSize(),
+                    columns = 3
+                )
+            }
+        }
+
+        // Вертикальные кнопки (только если есть элементы)
+        if (items.isNotEmpty()) {
+            VerticalButtons(
+                onSelectAll = onSelectAll,
+                onClearSelection = onClearSelection,
+                onSelectEven = onSelectEven,
                 currentLanguage = currentLanguage,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Квадрат с элементами массива
+            // Информация о выборе
+            SelectedInfo(
+                selectedCount = selectedIndices.size,
+                currentLanguage = currentLanguage,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+fun LandscapeLayout(
+    items: List<String>,
+    selectedIndices: Set<Int>,
+    onItemClick: (Int) -> Unit,
+    name: String,
+    onNameChange: (String) -> Unit,
+    onAddItem: () -> Unit,
+    onSelectAll: () -> Unit,
+    onClearSelection: () -> Unit,
+    onSelectEven: () -> Unit,
+    currentLanguage: String,
+    innerPadding: PaddingValues
+) {
+    Column(
+        modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Поле для ввода имени с кнопкой добавления
+        NameInputFieldWithButton(
+            name = name,
+            onNameChange = onNameChange,
+            onAddItem = onAddItem,
+            currentLanguage = currentLanguage,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Горизонтальная компоновка: список слева, кнопки справа
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Список элементов (занимает 70% ширины)
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                    .weight(0.7f)
+                    .fillMaxHeight()
             ) {
                 if (items.isEmpty()) {
-                    // Сообщение о пустом списке
                     EmptyListMessage(
                         currentLanguage = currentLanguage,
                         modifier = Modifier.fillMaxSize()
@@ -87,41 +231,41 @@ fun ListScreen() {
                     ItemsGrid(
                         items = items,
                         selectedIndices = selectedIndices,
-                        onItemClick = { index ->
-                            selectedIndices = if (selectedIndices.contains(index)) {
-                                selectedIndices - index
-                            } else {
-                                selectedIndices + index
-                            }
-                        },
+                        onItemClick = onItemClick,
                         currentLanguage = currentLanguage,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        columns = 4
                     )
                 }
             }
 
-            // Вертикальные кнопки (только если есть элементы)
+            // Вертикальные кнопки справа (занимают 30% ширины)
             if (items.isNotEmpty()) {
-                VerticalButtons(
-                    onSelectAll = {
-                        selectedIndices = items.indices.toSet()
-                    },
-                    onClearSelection = {
-                        selectedIndices = emptySet()
-                    },
-                    onSelectEven = {
-                        selectedIndices = items.indices.filter { it % 2 == 0 }.toSet()
-                    },
-                    currentLanguage = currentLanguage,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(
+                    modifier = Modifier
+                        .weight(0.3f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    VerticalButtons(
+                        onSelectAll = onSelectAll,
+                        onClearSelection = onClearSelection,
+                        onSelectEven = onSelectEven,
+                        currentLanguage = currentLanguage,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                // Информация о выборе
-                SelectedInfo(
-                    selectedCount = selectedIndices.size,
-                    currentLanguage = currentLanguage,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    SelectedInfo(
+                        selectedCount = selectedIndices.size,
+                        currentLanguage = currentLanguage,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            } else {
+                // Пустое пространство справа когда список пуст
+                Spacer(modifier = Modifier.weight(0.3f))
             }
         }
     }
@@ -222,7 +366,8 @@ fun ItemsGrid(
     selectedIndices: Set<Int>,
     onItemClick: (Int) -> Unit,
     currentLanguage: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    columns: Int = 3
 ) {
     Card(
         modifier = modifier,
@@ -232,8 +377,6 @@ fun ItemsGrid(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         border = ButtonDefaults.outlinedButtonBorder
     ) {
-        val columns = if (isLandscapeOrientation()) 4 else 3
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -304,7 +447,7 @@ fun GridItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = item.take(10), // Ограничиваем длину имени для отображения
+                text = item.take(10),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.onPrimaryContainer
@@ -450,6 +593,14 @@ fun isLandscapeOrientation(): Boolean {
 @Preview(showBackground = true)
 @Composable
 fun ListScreenPreview() {
+    Lab2Theme {
+        ListScreen()
+    }
+}
+
+@Preview(showBackground = true, widthDp = 800, heightDp = 400)
+@Composable
+fun ListScreenLandscapePreview() {
     Lab2Theme {
         ListScreen()
     }
