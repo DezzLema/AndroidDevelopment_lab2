@@ -161,23 +161,22 @@ fun PortraitLayout(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Вертикальные кнопки (только если есть элементы)
-        if (items.isNotEmpty()) {
-            VerticalButtons(
-                onSelectAll = onSelectAll,
-                onClearSelection = onClearSelection,
-                onSelectEven = onSelectEven,
-                currentLanguage = currentLanguage,
-                modifier = Modifier.fillMaxWidth()
-            )
+        // Вертикальные кнопки (показываются всегда)
+        VerticalButtons(
+            onSelectAll = onSelectAll,
+            onClearSelection = onClearSelection,
+            onSelectEven = onSelectEven,
+            currentLanguage = currentLanguage,
+            modifier = Modifier.fillMaxWidth(),
+            items = items // Передаем список для управления состоянием кнопок
+        )
 
-            // Информация о выборе
-            SelectedInfo(
-                selectedCount = selectedIndices.size,
-                currentLanguage = currentLanguage,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        // Информация о выборе (показывается всегда)
+        SelectedInfo(
+            selectedCount = selectedIndices.size,
+            currentLanguage = currentLanguage,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -232,33 +231,29 @@ fun LandscapeLayout(
                 }
             }
 
-            // Вертикальные кнопки справа (занимают 30% ширины)
-            if (items.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .weight(0.3f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    VerticalButtons(
-                        onSelectAll = onSelectAll,
-                        onClearSelection = onClearSelection,
-                        onSelectEven = onSelectEven,
-                        currentLanguage = currentLanguage,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            // Вертикальные кнопки справа (занимают 30% ширины, показываются всегда)
+            Column(
+                modifier = Modifier
+                    .weight(0.3f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                VerticalButtons(
+                    onSelectAll = onSelectAll,
+                    onClearSelection = onClearSelection,
+                    onSelectEven = onSelectEven,
+                    currentLanguage = currentLanguage,
+                    modifier = Modifier.fillMaxWidth(),
+                    items = items // Передаем список для управления состоянием кнопок
+                )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    SelectedInfo(
-                        selectedCount = selectedIndices.size,
-                        currentLanguage = currentLanguage,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            } else {
-                // Пустое пространство справа когда список пуст
-                Spacer(modifier = Modifier.weight(0.3f))
+                SelectedInfo(
+                    selectedCount = selectedIndices.size,
+                    currentLanguage = currentLanguage,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 
@@ -272,7 +267,6 @@ fun LandscapeLayout(
         )
     }
 }
-
 @Composable
 fun NameInputFieldWithAddButton(
     name: String,
@@ -531,16 +525,18 @@ fun VerticalButtons(
     onClearSelection: () -> Unit,
     onSelectEven: () -> Unit,
     currentLanguage: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    items: List<String> = emptyList() // Добавляем параметр для проверки состояния
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Кнопка 1 - Выбрать все
+        // Кнопка 1 - Выбрать все (активна только когда есть элементы)
         Button(
             onClick = onSelectAll,
             modifier = Modifier.fillMaxWidth(),
+            enabled = items.isNotEmpty(), // Делаем активной только при наличии элементов
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
             )
@@ -551,10 +547,11 @@ fun VerticalButtons(
             )
         }
 
-        // Кнопка 2 - Сбросить выбор
+        // Кнопка 2 - Сбросить выбор (активна только когда есть элементы)
         Button(
             onClick = onClearSelection,
             modifier = Modifier.fillMaxWidth(),
+            enabled = items.isNotEmpty(), // Делаем активной только при наличии элементов
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary
             )
@@ -565,10 +562,11 @@ fun VerticalButtons(
             )
         }
 
-        // Кнопка 3 - Выбрать четные
+        // Кнопка 3 - Выбрать четные (активна только когда есть элементы)
         Button(
             onClick = onSelectEven,
             modifier = Modifier.fillMaxWidth(),
+            enabled = items.isNotEmpty(), // Делаем активной только при наличии элементов
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.tertiary
             )
